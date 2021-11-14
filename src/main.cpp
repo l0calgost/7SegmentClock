@@ -29,7 +29,7 @@ NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600);
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 // color we use
-const uint32_t RED  = pixels.Color(255, 0, 0);
+const uint32_t RED  = pixels.Color(125, 0, 0);
 // number of leds per segment
 const int SEGMENT_LEDS = 3;
 // digit offset (number of leds per digit)
@@ -60,20 +60,20 @@ void setup(){
   WiFi.begin(ssid, password);
   pixels.begin();
 
-  for(int i=0; i<NUMPIXELS; i++) {
-    pixels.setPixelColor(i, RED);
-    pixels.show();
-    delay(30);
-  }
-  boolean pixelsOn = false;
-  while ( WiFi.status() != WL_CONNECTED ) {
-    delay ( 500 );
-    if (pixelsOn){
-    pixels.clear();
-    pixelsOn = false;
-    } else {
-      pixels.fill(RED, 0, 30);
-      pixelsOn = true;
+  int index = 0;
+  wl_status_t connectionState = WL_DISCONNECTED;
+
+  while (connectionState != WL_CONNECTED) {
+    delay (100);
+    pixels.fill(RED, index * SEGMENT_LEDS, SEGMENT_LEDS);
+    // pixels.setPixelColor(index - SEGMENT_LEDS + 2, 0);
+    pixels.fill(0, index * SEGMENT_LEDS - SEGMENT_LEDS, SEGMENT_LEDS);
+    index++;
+    if(index % 10 == 0) {
+      connectionState = WiFi.status();
+    }
+    if(pixels.numPixels() == index) {
+      index = 0;
     }
     pixels.show();
   }
@@ -89,8 +89,8 @@ void loop() {
   int minutes = timeClient.getMinutes();
   int seconds = timeClient.getSeconds();
 
-  updateHours(hours);
   updateMinutes(minutes);
+  updateHours(hours);
   flipColons(seconds);
   pixels.show();
 
@@ -100,23 +100,24 @@ void loop() {
 
 void updateHours(int hours) {
   std::vector<int> digits = getDigits(hours);
-  setDigits(digits, 0);
+  int offset = 2 * DIGIT_OFFSET + 2;// two minute digits + colons
+  setDigits(digits, offset);
 }
 
 void updateMinutes(int minutes) {
   std::vector<int> digits = getDigits(minutes);
-  int offset = 2 * DIGIT_OFFSET + 2;// two hour digits + colons
-  setDigits(digits, offset);
+  setDigits(digits, 0);
 }
 
 void setDigits(std::vector<int> digits, int offset) {
-  for (int i = 0; i < digits.size(); i++){
+  for (int i = digits.size(); i >= 0; i--){
     setPixels(digits[i], offset);
     offset = offset + DIGIT_OFFSET;
   }
 }
 
 void setPixels(int digit, int offset) {
+  clearDigit(offset);
   if (digit == 1){
     setOne(offset);
   }else if (digit == 2){
@@ -142,67 +143,59 @@ void setPixels(int digit, int offset) {
 
 /*
 Segment is build like this:
-    151617
-  14      18
-  13      19
-  12      20
-    11109
-  0       8
-  1       7
-  2       6
-     345
+     543
+  6       2
+  7       1
+  8       0
+    91011
+  20      12
+  19      13
+  18      14
+    171615
 
 */
+
 void setZero(int offset) {
-  clearDigit(offset);
   pixels.fill(RED, offset, SEGMENT_LEDS * 3);
   pixels.fill(RED, offset + SEGMENT_LEDS * 4, SEGMENT_LEDS * 3);
 }
 void setOne(int offset) {
-  clearDigit(offset);
-  pixels.fill(RED, offset + SEGMENT_LEDS * 2, SEGMENT_LEDS);
-  pixels.fill(RED, offset + SEGMENT_LEDS * 6, SEGMENT_LEDS);
+  pixels.fill(RED, offset, SEGMENT_LEDS);
+  pixels.fill(RED, offset + SEGMENT_LEDS * 4, SEGMENT_LEDS);
 }
 void setTwo(int offset) {
-  clearDigit(offset);
   pixels.fill(RED, offset, SEGMENT_LEDS * 2);
   pixels.fill(RED, offset + SEGMENT_LEDS * 3, SEGMENT_LEDS);
   pixels.fill(RED, offset + SEGMENT_LEDS * 5, SEGMENT_LEDS * 2);
 }
 void setThree(int offset) {
-  clearDigit(offset);
-  pixels.fill(RED, offset + SEGMENT_LEDS, SEGMENT_LEDS * 3);
-  pixels.fill(RED, offset + SEGMENT_LEDS * 5, SEGMENT_LEDS * 2);
+  pixels.fill(RED, offset, SEGMENT_LEDS * 2);
+  pixels.fill(RED, offset + SEGMENT_LEDS * 3, SEGMENT_LEDS * 3);
 }
 void setFour(int offset) {
-  clearDigit(offset);
+  pixels.fill(RED, offset, SEGMENT_LEDS);
   pixels.fill(RED, offset + SEGMENT_LEDS * 2, SEGMENT_LEDS * 3);
-  pixels.fill(RED, offset + SEGMENT_LEDS * 6, SEGMENT_LEDS);
 }
 void setFive(int offset) {
-  clearDigit(offset);
   pixels.fill(RED, offset + SEGMENT_LEDS, SEGMENT_LEDS * 5);
 }
 void setSix(int offset) {
-  clearDigit(offset);
-  pixels.fill(RED, offset, SEGMENT_LEDS * 6);
+  pixels.fill(RED, offset + SEGMENT_LEDS, SEGMENT_LEDS * 6);
 }
 void setSeven(int offset) {
-  clearDigit(offset);
-  pixels.fill(RED, offset + SEGMENT_LEDS * 2, SEGMENT_LEDS);
-  pixels.fill(RED, offset + SEGMENT_LEDS * 5, SEGMENT_LEDS * 2);
+  pixels.fill(RED, offset, SEGMENT_LEDS * 2);
+  pixels.fill(RED, offset + SEGMENT_LEDS * 5, SEGMENT_LEDS);
 }
 void setEight(int offset) {
-  clearDigit(offset);
   pixels.fill(RED, offset, SEGMENT_LEDS * 7);
 }
 void setNine(int offset) {
-  clearDigit(offset);
-  pixels.fill(RED, offset + SEGMENT_LEDS, SEGMENT_LEDS * 6);
+  pixels.fill(RED, offset, SEGMENT_LEDS * 6);
 }
 
 void clearDigit(int offset) {
-  pixels.fill(0, offset, SEGMENT_LEDS);
+  pixels.fill(0, offset, DIGIT_OFFSET);
+  pixels.show();
 }
 
 std::vector<int> getDigits(int value) {
@@ -218,8 +211,8 @@ std::vector<int> getDigits(int value) {
 }
 void flipColons(int seconds) {
   if (seconds % 2 == 0){
-    pixels.fill(RED, 42, 2);
+    pixels.fill(RED, DIGIT_OFFSET * 2, 2);
   } else {
-    pixels.fill(0, 42, 2);
+    pixels.fill(0, DIGIT_OFFSET * 2, 2);
   }
 }
