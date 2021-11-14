@@ -64,9 +64,10 @@ void setup(){
   wl_status_t connectionState = WL_DISCONNECTED;
 
   while (connectionState != WL_CONNECTED) {
-    delay (50);
-    pixels.fill(RED, index, SEGMENT_LEDS);
-    pixels.setPixelColor(index - SEGMENT_LEDS + 2, 0);
+    delay (100);
+    pixels.fill(RED, index * SEGMENT_LEDS, SEGMENT_LEDS);
+    // pixels.setPixelColor(index - SEGMENT_LEDS + 2, 0);
+    pixels.fill(0, index * SEGMENT_LEDS - SEGMENT_LEDS, SEGMENT_LEDS);
     index++;
     if(index % 10 == 0) {
       connectionState = WiFi.status();
