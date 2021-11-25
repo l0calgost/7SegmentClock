@@ -29,7 +29,7 @@ NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600);
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 // color we use
-const uint32_t RED  = pixels.Color(125, 0, 0);
+const uint32_t RED  = pixels.Color(200, 0, 0);
 // number of leds per segment
 const int SEGMENT_LEDS = 3;
 // digit offset (number of leds per digit)
@@ -64,10 +64,10 @@ void setup(){
   wl_status_t connectionState = WL_DISCONNECTED;
 
   while (connectionState != WL_CONNECTED) {
-    delay (100);
+    delay (50);
     pixels.fill(RED, index * SEGMENT_LEDS, SEGMENT_LEDS);
     // pixels.setPixelColor(index - SEGMENT_LEDS + 2, 0);
-    pixels.fill(0, index * SEGMENT_LEDS - SEGMENT_LEDS, SEGMENT_LEDS);
+    // pixels.fill(0, index * SEGMENT_LEDS - SEGMENT_LEDS, SEGMENT_LEDS);
     index++;
     if(index % 10 == 0) {
       connectionState = WiFi.status();
@@ -110,7 +110,7 @@ void updateMinutes(int minutes) {
 }
 
 void setDigits(std::vector<int> digits, int offset) {
-  for (int i = digits.size(); i >= 0; i--){
+  for (int i = 0; i < digits.size(); i++){
     setPixels(digits[i], offset);
     offset = offset + DIGIT_OFFSET;
   }
@@ -184,7 +184,7 @@ void setSix(int offset) {
 }
 void setSeven(int offset) {
   pixels.fill(RED, offset, SEGMENT_LEDS * 2);
-  pixels.fill(RED, offset + SEGMENT_LEDS * 5, SEGMENT_LEDS);
+  pixels.fill(RED, offset + SEGMENT_LEDS * 4, SEGMENT_LEDS);
 }
 void setEight(int offset) {
   pixels.fill(RED, offset, SEGMENT_LEDS * 7);
@@ -201,11 +201,11 @@ void clearDigit(int offset) {
 std::vector<int> getDigits(int value) {
   std::vector<int> digits;
   if (value < 10){
-    digits.push_back(0);
     digits.push_back(value);
+    digits.push_back(0);
   } else {
-    digits.push_back(value / 10);
     digits.push_back(value % 10);
+    digits.push_back(value / 10);
   }
   return digits;
 }
