@@ -35,7 +35,7 @@ const int SEGMENT_LEDS = 3;
 // digit offset (number of leds per digit)
 const int DIGIT_OFFSET = 7 * SEGMENT_LEDS;
 
-
+void showTime(boolean);
 void updateHours(int);
 void updateMinutes(int);
 void flipColons(int);
@@ -53,6 +53,7 @@ void setSeven(int);
 void setEight(int);
 void setNine(int);
 void clearDigit(int);
+boolean update(boolean, int);
 
 void setup(){
   Serial.begin(115200);
@@ -79,23 +80,31 @@ void setup(){
   }
   timeClient.begin();
   pixels.clear();
-  pixels.show();
+  showTime(true);
 }
 
 void loop() {
+  showTime(false);
+  delay(1000);
+}
+
+void showTime(boolean ignoreIndicators) {
   timeClient.update();
 
   int hours = timeClient.getHours();
   int minutes = timeClient.getMinutes();
   int seconds = timeClient.getSeconds();
 
-  updateMinutes(minutes);
-  updateHours(hours);
+  if (update(ignoreIndicators, seconds)){
+    updateMinutes(minutes);
+  }
+  if (update(ignoreIndicators, minutes)){
+    updateHours(hours);
+  }
+  
   flipColons(seconds);
   pixels.show();
-
   Serial.println(timeClient.getFormattedTime());
-  delay(1000);
 }
 
 void updateHours(int hours) {
@@ -215,4 +224,11 @@ void flipColons(int seconds) {
   } else {
     pixels.fill(0, DIGIT_OFFSET * 2, 2);
   }
+}
+
+boolean update(boolean ignoreValue, int value) {
+  if (ignoreValue){
+    return true;
+  }
+  return value == 0;
 }
