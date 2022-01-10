@@ -29,7 +29,7 @@ NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600);
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 // color we use
-const uint32_t RED  = pixels.Color(250, 0, 0);
+const uint32_t RED  = pixels.Color(127, 0, 0);
 // number of leds per segment
 const int SEGMENT_LEDS = 3;
 // digit offset (number of leds per digit)
