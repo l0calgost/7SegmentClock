@@ -1,11 +1,10 @@
 #include <Arduino.h>
 
-#include <NTPClient.h>
 // change next line to use with another board/shield
 #include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
 #include <config.h>
 #include <Adafruit_NeoPixel.h>
+#include <ezTime.h>
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
@@ -14,8 +13,7 @@
 const char *ssid     = WLAN_SSID;
 const char *password = WLAN_PASSWORD;
 
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600);
+Timezone timezone;
 
 // Neopixel config
 #define PIN 2 
@@ -61,6 +59,7 @@ void setup(){
   WiFi.begin(ssid, password);
   pixels.begin();
 
+
   int index = 0;
   wl_status_t connectionState = WL_DISCONNECTED;
 
@@ -78,7 +77,9 @@ void setup(){
     }
     pixels.show();
   }
-  timeClient.begin();
+  waitForSync();
+  timezone.setLocation(F("de"));
+
   pixels.clear();
   showTime(true);
 }
@@ -89,11 +90,9 @@ void loop() {
 }
 
 void showTime(boolean ignoreIndicators) {
-  timeClient.update();
-
-  int hours = timeClient.getHours();
-  int minutes = timeClient.getMinutes();
-  int seconds = timeClient.getSeconds();
+  int hours = timezone.hour();
+  int minutes = timezone.minute();
+  int seconds = timezone.second();
 
   if (update(ignoreIndicators, seconds)){
     updateMinutes(minutes);
@@ -104,7 +103,7 @@ void showTime(boolean ignoreIndicators) {
   
   flipColons(seconds);
   pixels.show();
-  Serial.println(timeClient.getFormattedTime());
+  Serial.println(timezone.dateTime());
 }
 
 void updateHours(int hours) {
